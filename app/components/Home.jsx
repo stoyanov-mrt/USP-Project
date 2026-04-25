@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Warehouse, BarChart3, Package, Shield, ArrowRight, CheckCircle } from "lucide-react";
+import warehouseImage from "../../Warehouse MGM.png";
 
 function Home() {
   return <div className="min-h-screen bg-background">
@@ -70,7 +71,7 @@ function Home() {
               </div>
               <h3 className="mb-3">Inventory Management</h3>
               <p className="text-muted-foreground">
-                Track all your products with detailed information including SKU, location, quantity, and minimum stock levels.
+                Track all your products with detailed information including SKU, quantity,location, minimum stock levels and incoming stocks.
               </p>
             </div>
 
@@ -102,8 +103,8 @@ function Home() {
   }
       <div className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+            <div className="md:col-span-5">
               <h2 className="text-4xl mb-6">Why Choose Our System?</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -136,9 +137,13 @@ function Home() {
                 </div>
               </div>
             </div>
-            <div className="bg-card border border-border rounded-xl p-8">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
-                <Warehouse className="w-32 h-32 text-primary/40" />
+            <div className="md:col-span-7 bg-card border border-border rounded-xl p-3 md:p-4">
+              <div className="h-[420px] md:h-[520px] rounded-lg overflow-hidden bg-background flex items-center justify-center">
+                <img
+    src={warehouseImage}
+    alt="Warehouse operations"
+    className="w-full h-full object-contain"
+  />
               </div>
             </div>
           </div>
