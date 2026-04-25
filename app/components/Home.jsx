@@ -1,7 +1,30 @@
 import { Link } from "react-router";
 import { Warehouse, BarChart3, Package, Shield, ArrowRight, CheckCircle } from "lucide-react";
+
 function Home() {
   return <div className="min-h-screen bg-background">
+      <header className="bg-background/95 border-b border-border sticky top-0 z-10 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-foreground">
+            <Warehouse className="w-5 h-5 text-primary" />
+            <span className="font-medium">Warehouse Management</span>
+          </div>
+          <nav className="flex items-center gap-3">
+            <Link
+    to="/login"
+    className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-accent transition-colors"
+  >
+              Login
+            </Link>
+            <Link
+    to="/contact"
+    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+  >
+              Contact Us
+            </Link>
+          </nav>
+        </div>
+      </header>
       {
     /* Hero Section */
   }
@@ -19,13 +42,6 @@ function Home() {
               Track, manage, and optimize your electronics inventory in real-time.
             </p>
             <div className="flex gap-4 justify-center">
-              <Link
-    to="/login"
-    className="inline-flex items-center gap-2 bg-primary-foreground text-primary px-8 py-3 rounded-lg hover:opacity-90 transition-opacity"
-  >
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </Link>
               <a
     href="#features"
     className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary-foreground/20 transition-colors border border-primary-foreground/20"
