@@ -18,16 +18,30 @@ const createProduct = async (req, res) => {
     try {
         const { name, sku, description } = req.body;
 
+        if (!name || !sku) {
+            return res.status(400).json({ message: `Name and SKU are required!` });
+        }
+
+        const trimmedName = name.trim();
+        const trimmedSku = sku.trim();
+
+        if (!trimmedName || !trimmedSku) {
+            return res.status(400).json({ message: "Name and SKU cannot be empty!" });
+        }
+
         const product = await prisma.product.create({
             data: {
-                name,
-                sku,
+                name: trimmedName,
+                sku: trimmedSku,
                 description,
             }
         })
         res.status(201).json(product);
     } catch (error) {
-        res.status(500).json({ message: `Error creating product: ${error}` });
+        if (error.code === "P2002") {
+            return res.status(409).json({ message: "Product with this SKU already exists!" });
+        }
+        res.status(500).json({ message: `Error creating product: ${error.message}` });
     }
 }
 

@@ -19,6 +19,10 @@ const createWarehouse = async (req, res) => {
     try {
         const { name, location } = req.body;
 
+        if (!name) {
+            return res.status(400).json({ message: "Name and location are required!" });
+        }
+
         const warehouse = await prisma.warehouse.create({
             data: {
                 name,
