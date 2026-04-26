@@ -20,19 +20,26 @@ const createWarehouse = async (req, res) => {
         const { name, location } = req.body;
 
         if (!name) {
-            return res.status(400).json({ message: "Name and location are required!" });
+            return res.status(400).json({ message: "Warehouse name is required!" });
+        }
+
+        const trimmedName = name.trim();
+        const trimmedLocation = location ? location.trim() : undefined;
+
+        if (!trimmedName) {
+            return res.status(400).json({ message: "Warehouse name cannot be empty" });
         }
 
         const warehouse = await prisma.warehouse.create({
             data: {
-                name,
-                location,
+                name: trimmedName,
+                location: trimmedLocation,
             }
         })
 
         res.status(201).json(warehouse);
     } catch (error) {
-        res.status(500).json({ message: `Error creating warehouse ${error}` });
+        res.status(500).json({ message: `Error creating warehouse ${error.message}` });
     }
 }
 
