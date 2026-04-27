@@ -5,6 +5,7 @@ require('dotenv').config();
 const productRoutes = require("./routes/product/routes");
 const warehouseRoutes = require("./routes/warehouse/routes");
 const stockRoutes = require("./routes/stock/routes")
+const categoryRoutes = require("./routes/category/routes");
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 app.use("/products", productRoutes);
 app.use("/warehouses", warehouseRoutes);
 app.use("/stocks", stockRoutes);
+app.use("/categories", categoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 

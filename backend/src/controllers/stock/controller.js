@@ -4,7 +4,11 @@ const getStocks = async (req, res) => {
     try {
         const stocks = await prisma.stock.findMany({
             include: {
-                product: true,
+                product: {
+                    include: {
+                        category: true,
+                    },
+                },
                 warehouse: true,
             },
         });

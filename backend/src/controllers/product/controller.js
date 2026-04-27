@@ -5,6 +5,7 @@ const getProducts = async (req, res) => {
         const products = await prisma.product.findMany({
             include: {
                 stocks: true,
+                category: true,
             },
         });
 
@@ -16,7 +17,7 @@ const getProducts = async (req, res) => {
 // http://localhost:5000/products postman
 const createProduct = async (req, res) => {
     try {
-        const { name, sku, description } = req.body;
+        const { name, sku, description, categoryId } = req.body;
 
         if (!name || !sku) {
             return res.status(400).json({ message: `Name and SKU are required!` });
@@ -34,6 +35,7 @@ const createProduct = async (req, res) => {
                 name: trimmedName,
                 sku: trimmedSku,
                 description,
+                categoryId: categoryId ? Number(categoryId) : undefined,
             }
         })
         res.status(201).json(product);
@@ -56,6 +58,7 @@ const getProductById = async (req, res) => {
         const product = await prisma.product.findUnique({
             include: {
                 stocks: true,
+                category: true,
             },
             where: {
                 id: productId,
