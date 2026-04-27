@@ -1,19 +1,43 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { Package, Plus } from "lucide-react";
+import { getWarehouses } from "../src/api/api.js";
+
 function InventoryForm({ onAddItem }) {
+
+    const [warehouses, setWarehouses] = useState([]);
+
+    const loadWarehouses = async () => {
+        try {
+            const data = await getWarehouses();
+
+            setWarehouses(data);
+            console.log(data);
+
+        } catch (error) {
+            console.error(`Error loading Warehouse: ${error.message}`);
+        }
+    }
+
+    useEffect(() => {
+        loadWarehouses();
+    }, [])
+
   const [formData, setFormData] = useState({
     productName: "",
     sku: "",
     category: "Laptops",
-    quantity: 0,
+    quantity: "",
     location: "",
-    minStock: 0
+      warehouseId: "",
+    minStock: ""
   });
   const handleSubmit = (e) => {
     e.preventDefault();
     const newItem = {
       id: Date.now().toString(),
       ...formData,
+        quantity: Number(formData.quantity),
+        minStock: Number(formData.minStock),
       dateAdded: (/* @__PURE__ */ new Date()).toISOString()
     };
     onAddItem(newItem);
@@ -21,11 +45,14 @@ function InventoryForm({ onAddItem }) {
       productName: "",
       sku: "",
       category: "Laptops",
-      quantity: 0,
+      quantity: "",
       location: "",
-      minStock: 0
+        warehouseId: "",
+      minStock: ""
     });
   };
+
+
   return <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
@@ -79,14 +106,22 @@ function InventoryForm({ onAddItem }) {
 
           <div>
             <label className="block mb-2 text-foreground">Warehouse Location</label>
-            <input
-    type="text"
-    required
-    value={formData.location}
-    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-    placeholder="e.g., A-12-03"
-  />
+              <select
+                  required
+                  value={formData.warehouseId}
+                  onChange={(e) =>
+                      setFormData({ ...formData, warehouseId: Number(e.target.value) })
+                  }
+                  className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                  <option value="">Select warehouse</option>
+
+                  {warehouses.map((warehouse) => (
+                      <option key={warehouse.id} value={warehouse.id}>
+                          {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
+                      </option>
+                  ))}
+              </select>
           </div>
 
           <div>
@@ -96,7 +131,9 @@ function InventoryForm({ onAddItem }) {
     required
     min="0"
     value={formData.quantity}
-    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+    onChange={(e) =>
+        setFormData({ ...formData, quantity: e.target.value })
+    }
     className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
   />
           </div>
@@ -107,8 +144,9 @@ function InventoryForm({ onAddItem }) {
     type="number"
     required
     min="0"
-    value={formData.minStock}
-    onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })}
+    onChange={(e) =>
+        setFormData({ ...formData, minStock: e.target.value })
+    }
     className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
   />
           </div>

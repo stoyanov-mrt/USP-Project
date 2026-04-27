@@ -79,3 +79,13 @@ export const updateStock = async (id, quantity) => {
 
     return res.json();
 }
+
+export const getWarehouses = async () => {
+    const res = await fetch(`${BASE_URL}/warehouses`);
+
+    if (!res.ok) {
+        throw new Error("Failed to get warehouse!");
+    }
+
+    return res.json();
+}

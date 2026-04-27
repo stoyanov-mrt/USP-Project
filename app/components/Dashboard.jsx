@@ -4,8 +4,7 @@ import { Warehouse, FileText, Package, LogOut } from "lucide-react";
 import { InventoryForm } from "./InventoryForm";
 import { InventoryList } from "./InventoryList";
 import { InventoryReport } from "./InventoryReport";
-import { getStocks, createProduct, createStock, updateStock } from "../src/api/api";
-import { deleteStock } from "../src/api/api";
+import { getStocks, createProduct, createStock, updateStock, deleteStock } from "../src/api/api";
 
 function Dashboard() {
 
@@ -51,7 +50,7 @@ function Dashboard() {
 
     await createStock({
         productId: productId,
-        warehouseId: 1,
+        warehouseId: item.warehouseId,
         quantity: item.quantity,
     });
 
