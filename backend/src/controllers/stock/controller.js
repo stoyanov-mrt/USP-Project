@@ -80,8 +80,62 @@ const updateStock = async (req, res) => {
     }
 }
 
+const getStockById = async (req, res) => {
+    try {
+        const stockId = Number(req.params.id);
+
+        if (isNaN(stockId)) {
+            return res.status(400).json({ message: `Invalid stock id!` });
+        }
+
+        const stock = await prisma.stock.findUnique({
+            where: {
+                id: stockId,
+            },
+            include: {
+                product: true,
+                warehouse: true,
+            }
+        })
+
+        if (!stock) {
+            return res.status(404).json({ message: "Stock not found!" });
+        }
+
+        res.status(200).json(stock);
+    } catch (error) {
+        res.status(500).json({ message: `Error getting stock: ${error.message}` });
+    }
+}
+
+const deleteStock = async (req, res) => {
+    try {
+        const stockId = Number(req.params.id);
+
+        if (isNaN(stockId)) {
+            return res.status(400).json({ message: `Invalid stock id!` });
+        }
+
+        const deletedStock = await prisma.stock.delete({
+            where: {
+                id: stockId,
+            }
+        });
+
+        res.status(200).json(deletedStock);
+    } catch (error) {
+        if (error.code === "P2025") {
+            return res.status(404).json({ message: "Stock not found!" });
+        }
+
+        res.status(500).json({ message: `Error deleting stock: ${error.message}` });
+    }
+}
+
 module.exports = {
     getStocks,
     createStock,
     updateStock,
+    getStockById,
+    deleteStock,
 }
