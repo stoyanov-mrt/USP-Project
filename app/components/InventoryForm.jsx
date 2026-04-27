@@ -1,10 +1,59 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef } from "react";
 import { Package, Plus } from "lucide-react";
-import { getWarehouses } from "../src/api/api.js";
+import { getWarehouses, getCategories, createCategory } from "../src/api/api.js";
 
 function InventoryForm({ onAddItem }) {
+    const dropdownRef = useRef(null);
 
     const [warehouses, setWarehouses] = useState([]);
+
+    const [categories, setCategories] = useState([]);
+    const [categorySearch, setCategorySearch] = useState("");
+    const [showAddCategory, setShowAddCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(categorySearch);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [categorySearch]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setShowCategoryDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const data = await getCategories();
+            setCategories(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const filteredCategories = categories
+        .filter((category) =>
+            category.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        )
+        .slice(0, 5);
+
 
     const loadWarehouses = async () => {
         try {
@@ -18,14 +67,37 @@ function InventoryForm({ onAddItem }) {
         }
     }
 
+    const handleAddCategory = async () => {
+        try {
+            if (!categorySearch.trim()) return;
+
+            const newCategory = await createCategory({
+                name: categorySearch,
+            });
+
+            await loadCategories();
+
+            setFormData({
+                ...formData,
+                categoryId: newCategory.id,
+            });
+
+            setCategorySearch(newCategory.name);
+            setShowCategoryDropdown(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         loadWarehouses();
+        loadCategories();
     }, [])
 
   const [formData, setFormData] = useState({
     productName: "",
     sku: "",
-    category: "Laptops",
+    categoryId: "",
     quantity: "",
     location: "",
       warehouseId: "",
@@ -44,7 +116,7 @@ function InventoryForm({ onAddItem }) {
     setFormData({
       productName: "",
       sku: "",
-      category: "Laptops",
+      categoryId: "",
       quantity: "",
       location: "",
         warehouseId: "",
@@ -87,42 +159,72 @@ function InventoryForm({ onAddItem }) {
   />
           </div>
 
-          <div>
-            <label className="block mb-2 text-foreground">Category</label>
-            <select
-    value={formData.category}
-    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-  >
-              <option>Laptops</option>
-              <option>Monitors</option>
-              <option>Keyboards</option>
-              <option>Mice</option>
-              <option>Accessories</option>
-              <option>Storage</option>
-              <option>Networking</option>
-            </select>
-          </div>
+            <div className="relative" ref={dropdownRef}>
+                <label className="block mb-2 text-foreground">Category</label>
 
-          <div>
-            <label className="block mb-2 text-foreground">Warehouse Location</label>
-              <select
-                  required
-                  value={formData.warehouseId}
-                  onChange={(e) =>
-                      setFormData({ ...formData, warehouseId: Number(e.target.value) })
-                  }
-                  className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                  <option value="">Select warehouse</option>
+                <input
+                    type="text"
+                    required
+                    value={categorySearch}
+                    onFocus={() => setShowCategoryDropdown(true)}
+                    onChange={(e) => {
+                        setCategorySearch(e.target.value);
+                        setShowCategoryDropdown(true);
+                        setFormData({ ...formData, categoryId: "" });
+                    }}
+                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Search category..."
+                />
 
-                  {warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                          {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
-                      </option>
-                  ))}
-              </select>
-          </div>
+                {showCategoryDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg max-h-48 overflow-y-auto shadow-lg">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData({ ...formData, categoryId: category.id });
+                                        setCategorySearch(category.name);
+                                        setShowCategoryDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-muted"
+                                >
+                                    {category.name}
+                                </button>
+                            ))
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="w-full text-left px-4 py-2 text-primary hover:bg-muted"
+                            >
+                                + Add "{categorySearch}"
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <div>
+                <label className="block mb-2 text-foreground">Warehouse Location</label>
+                <select
+                    required
+                    value={formData.warehouseId}
+                    onChange={(e) =>
+                        setFormData({ ...formData, warehouseId: Number(e.target.value) })
+                    }
+                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                    <option value="">Select warehouse</option>
+
+                    {warehouses.map((warehouse) => (
+                        <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
+                        </option>
+                    ))}
+                </select>
+            </div>
 
           <div>
             <label className="block mb-2 text-foreground">Quantity</label>
@@ -144,6 +246,7 @@ function InventoryForm({ onAddItem }) {
     type="number"
     required
     min="0"
+    value={formData.minStock}
     onChange={(e) =>
         setFormData({ ...formData, minStock: e.target.value })
     }

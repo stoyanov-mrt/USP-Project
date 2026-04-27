@@ -22,10 +22,11 @@ function Dashboard() {
                 id: stock.id,
                 productName: stock.product.name,
                 sku: stock.product.sku,
-                category: stock.product.description,
+                category: stock.product.category?.name || "Uncategorized",
                 quantity: stock.quantity,
                 location: stock.warehouse.name,
                 minStock: 5,
+                dateAdded: stock.product.createdAt,
             }));
 
             setItems(mappedItems);
@@ -44,6 +45,7 @@ function Dashboard() {
         name: item.productName,
         sku: item.sku,
         description: item.category,
+        categoryId: item.categoryId,
     });
 
     const productId = product.id;
