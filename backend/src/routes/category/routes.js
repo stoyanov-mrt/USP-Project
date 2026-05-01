@@ -5,8 +5,9 @@ const {
     getCategories,
     createCategory,
 } = require("../../controllers/category/controller");
+const { authRequired } = require("../../middleware/auth");
 
 router.get("/", getCategories);
-router.post("/", createCategory);
+router.post("/", authRequired, createCategory);
 
 module.exports = router;

@@ -11,6 +11,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
@@ -46,4 +51,21 @@ model Stock {
   warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
 
   @@unique([productId, warehouseId])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model DashboardSettings {
+  id        Int      @id @default(autoincrement())
+  title     String   @default("Warehouse Inventory System")
+  subtitle  String   @default("Electronics Distribution Center")
+  updatedAt DateTime @updatedAt
 }
