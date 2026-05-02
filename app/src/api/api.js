@@ -115,3 +115,19 @@ export const createCategory = async (category) => {
 
     return res.json();
 };
+
+export const createWarehouse = async (warehouse) => {
+    const res = await fetch(`${BASE_URL}/warehouses`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(warehouse),
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to create warehouse!");
+    }
+
+    return res.json();
+}

@@ -1,10 +1,14 @@
 import {useEffect, useState, useRef } from "react";
 import { Package, Plus } from "lucide-react";
-import { getWarehouses, getCategories, createCategory } from "../src/api/api.js";
+import { getWarehouses, getCategories, createCategory, createWarehouse } from "../src/api/api.js";
 
 function InventoryForm({ onAddItem }) {
     const dropdownRef = useRef(null);
+    const warehouseDropdownRef = useRef(null);
 
+    const [warehouseSearch, setWarehouseSearch] = useState("");
+    const [showWarehouseDropdown, setShowWarehouseDropdown] = useState(false);
+    const [debouncedWarehouseSearch, setDebouncedWarehouseSearch] = useState("");
     const [warehouses, setWarehouses] = useState([]);
 
     const [categories, setCategories] = useState([]);
@@ -21,6 +25,14 @@ function InventoryForm({ onAddItem }) {
 
         return () => clearTimeout(timer);
     }, [categorySearch]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedWarehouseSearch(warehouseSearch);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [warehouseSearch]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -54,6 +66,12 @@ function InventoryForm({ onAddItem }) {
         )
         .slice(0, 5);
 
+    const filteredWarehouses = warehouses
+        .filter((warehouse) =>
+            warehouse.name.toLowerCase().includes(debouncedWarehouseSearch.toLowerCase())
+        )
+        .slice(0, 5);
+
 
     const loadWarehouses = async () => {
         try {
@@ -66,6 +84,28 @@ function InventoryForm({ onAddItem }) {
             console.error(`Error loading Warehouse: ${error.message}`);
         }
     }
+
+    const handleAddWarehouse = async () => {
+        try {
+            if (!warehouseSearch.trim()) return;
+
+            const newWarehouse = await createWarehouse({
+                name: warehouseSearch,
+            });
+
+            await loadWarehouses();
+
+            setFormData({
+                ...formData,
+                warehouseId: newWarehouse.id,
+            });
+
+            setWarehouseSearch(newWarehouse.name);
+            setShowWarehouseDropdown(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const handleAddCategory = async () => {
         try {
@@ -120,8 +160,10 @@ function InventoryForm({ onAddItem }) {
       quantity: "",
       location: "",
         warehouseId: "",
-      minStock: ""
-    });
+      minStock: "",
+    },
+        setWarehouseSearch(""),
+        setCategorySearch(""));
   };
 
 
@@ -206,24 +248,58 @@ function InventoryForm({ onAddItem }) {
                 )}
             </div>
 
-            <div>
+            <div className="relative" ref={warehouseDropdownRef}>
                 <label className="block mb-2 text-foreground">Warehouse Location</label>
-                <select
-                    required
-                    value={formData.warehouseId}
-                    onChange={(e) =>
-                        setFormData({ ...formData, warehouseId: Number(e.target.value) })
-                    }
-                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                    <option value="">Select warehouse</option>
 
-                    {warehouses.map((warehouse) => (
-                        <option key={warehouse.id} value={warehouse.id}>
-                            {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
-                        </option>
-                    ))}
-                </select>
+                <input
+                    type="text"
+                    required
+                    value={warehouseSearch}
+                    onFocus={() => setShowWarehouseDropdown(true)}
+                    onChange={(e) => {
+                        setWarehouseSearch(e.target.value);
+                        setShowWarehouseDropdown(true);
+                        setFormData({ ...formData, warehouseId: "" });
+                    }}
+                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Search warehouse..."
+                />
+
+                {showWarehouseDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg max-h-48 overflow-y-auto shadow-lg">
+                        {filteredWarehouses.length > 0 ? (
+                            filteredWarehouses.map((warehouse) => (
+                                <button
+                                    key={warehouse.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData({
+                                            ...formData,
+                                            warehouseId: warehouse.id,
+                                        });
+
+                                        setWarehouseSearch(
+                                            `${warehouse.name}${warehouse.location ? ` - ${warehouse.location}` : ""}`
+                                        );
+
+                                        setShowWarehouseDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-muted"
+                                >
+                                    {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
+                                </button>
+                            ))
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleAddWarehouse}
+                                className="w-full text-left px-4 py-2 text-primary hover:bg-muted"
+                            >
+                                + Add "{warehouseSearch}"
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
           <div>
