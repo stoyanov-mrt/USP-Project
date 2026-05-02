@@ -5,6 +5,7 @@ import { InventoryForm } from "./InventoryForm";
 import { InventoryList } from "./InventoryList";
 import { InventoryReport } from "./InventoryReport";
 import { getStocks, createProduct, createStock, updateStock, deleteStock } from "../src/api/api";
+import ThemeToggle from "./ThemeToggle";
 
 function Dashboard() {
 
@@ -98,13 +99,16 @@ function Dashboard() {
                 <p className="text-muted-foreground mt-1">Electronics Distribution Center</p>
               </div>
             </div>
-            <button
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
     onClick={handleLogout}
     className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
   >
               <LogOut className="w-4 h-4" />
               Logout
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </header>

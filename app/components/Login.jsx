@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Warehouse, LogIn, Mail, Lock } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -12,6 +13,9 @@ function Login() {
     navigate("/dashboard");
   };
   return <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         {
     /* Logo & Header */
