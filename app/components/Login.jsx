@@ -8,9 +8,23 @@ function Login() {
     email: "",
     password: ""
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+  };
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await login(formData);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
   return <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="absolute right-4 top-4">
@@ -34,7 +48,10 @@ function Login() {
     /* Login Card */
   }
         <div className="bg-card border border-border rounded-xl p-8 shadow-lg">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {error ? <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div> : null}
+          <form onSubmit={onSubmit} className="space-y-6">
             <div>
               <label className="block mb-2 text-foreground">Email Address</label>
               <div className="relative">
@@ -80,16 +97,17 @@ function Login() {
 
             <button
     type="submit"
+    disabled={loading}
     className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:opacity-90 transition-opacity"
   >
               <LogIn className="w-4 h-4" />
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-muted-foreground">
-              Demo credentials: Any email/password will work
+              Sign in with an account created in the admin panel.
             </p>
           </div>
         </div>

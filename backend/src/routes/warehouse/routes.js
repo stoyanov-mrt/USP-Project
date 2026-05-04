@@ -5,11 +5,12 @@ const {
     getWarehouses,
     createWarehouse, getWarehouseById, updateWarehouse, deleteWarehouse,
 } = require("../../controllers/warehouse/controller");
+const { authRequired } = require("../../middleware/auth");
 
 router.get("/", getWarehouses);
 router.get("/:id", getWarehouseById);
-router.post("/", createWarehouse);
-router.put("/:id", updateWarehouse);
-router.delete("/:id", deleteWarehouse);
+router.post("/", authRequired, createWarehouse);
+router.put("/:id", authRequired, updateWarehouse);
+router.delete("/:id", authRequired, deleteWarehouse);
 
 module.exports = router;

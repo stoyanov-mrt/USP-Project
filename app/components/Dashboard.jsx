@@ -14,6 +14,10 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState("inventory");
 
     const [items, setItems] = useState([]);
+    const [header, setHeader] = useState({
+        title: "Warehouse Inventory System",
+        subtitle: "Electronics Distribution Center",
+    });
 
     const loadData = async () => {
         try {
@@ -38,6 +42,20 @@ function Dashboard() {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const settings = await getDashboardSettings();
+                setHeader({
+                    title: settings?.title || "Warehouse Inventory System",
+                    subtitle: settings?.subtitle || "Electronics Distribution Center",
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        })();
     }, []);
 
   const handleAddItem = async (item) => {
@@ -81,6 +99,7 @@ function Dashboard() {
     };
 
   const handleLogout = () => {
+    clearStoredAuth();
     navigate("/");
   };
   return <div className="min-h-screen bg-background">
@@ -95,8 +114,8 @@ function Dashboard() {
                 <Warehouse className="w-6 h-6" />
               </div>
               <div>
-                <h1>Warehouse Inventory System</h1>
-                <p className="text-muted-foreground mt-1">Electronics Distribution Center</p>
+                <h1>{header.title}</h1>
+                <p className="text-muted-foreground mt-1">{header.subtitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
