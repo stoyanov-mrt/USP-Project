@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Warehouse, BarChart3, Package, Shield, ArrowRight, CheckCircle } from "lucide-react";
 import warehouseImage from "../../Warehouse MGM.png";
+import ThemeToggle from "./ThemeToggle";
 
 function Home() {
   return <div className="min-h-screen bg-background">
@@ -11,6 +12,7 @@ function Home() {
             <span className="font-medium">Warehouse Management</span>
           </div>
           <nav className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
     to="/login"
     className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-accent transition-colors"
