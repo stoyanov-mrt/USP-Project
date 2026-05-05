@@ -4,7 +4,15 @@ import { Warehouse, FileText, Package, LogOut } from "lucide-react";
 import { InventoryForm } from "./InventoryForm";
 import { InventoryList } from "./InventoryList";
 import { InventoryReport } from "./InventoryReport";
-import { getStocks, createProduct, createStock, updateStock, deleteStock } from "../src/api/api";
+import {
+    clearStoredAuth,
+    getDashboardSettings,
+    getStocks,
+    createProduct,
+    createStock,
+    updateStock,
+    deleteStock,
+} from "../src/api/api";
 import ThemeToggle from "./ThemeToggle";
 
 function Dashboard() {

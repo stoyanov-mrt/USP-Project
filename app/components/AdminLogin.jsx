@@ -98,12 +98,6 @@ function AdminLogin() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              Credentials: <span className="font-medium text-foreground">admin / admin</span>
-            </p>
-          </div>
         </div>
 
         <div className="mt-6 text-center">

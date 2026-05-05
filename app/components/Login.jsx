@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Warehouse, LogIn, Mail, Lock } from "lucide-react";
+import { login } from "../src/api/api";
 import ThemeToggle from "./ThemeToggle";
+
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -10,9 +12,7 @@ function Login() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
