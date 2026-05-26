@@ -1,31 +1,187 @@
-import { useState } from "react";
+import {useEffect, useState, useRef } from "react";
 import { Package, Plus } from "lucide-react";
+import { getWarehouses, getCategories, createCategory, createWarehouse } from "../src/api/api.js";
+
 function InventoryForm({ onAddItem }) {
+    const dropdownRef = useRef(null);
+    const warehouseDropdownRef = useRef(null);
+
+    const [warehouseSearch, setWarehouseSearch] = useState("");
+    const [warehouseFilterQuery, setWarehouseFilterQuery] = useState("");
+    const [showWarehouseDropdown, setShowWarehouseDropdown] = useState(false);
+    const [warehouses, setWarehouses] = useState([]);
+
+    const [categories, setCategories] = useState([]);
+    const [categorySearch, setCategorySearch] = useState("");
+    const [showAddCategory, setShowAddCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(categorySearch);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [categorySearch]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setShowCategoryDropdown(false);
+            }
+            if (
+                warehouseDropdownRef.current &&
+                !warehouseDropdownRef.current.contains(event.target)
+            ) {
+                setShowWarehouseDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const data = await getCategories();
+            setCategories(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const filteredCategories = categories
+        .filter((category) =>
+            category.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        )
+        .slice(0, 5);
+
+    const getWarehouseLabel = (warehouse) =>
+        warehouse.location
+            ? `${warehouse.name} - ${warehouse.location}`
+            : warehouse.name;
+
+    const matchesWarehouseQuery = (warehouse, query) => {
+        if (!query.trim()) return true;
+        const q = query.toLowerCase();
+        const label = getWarehouseLabel(warehouse).toLowerCase();
+        return (
+            label.includes(q) ||
+            warehouse.name.toLowerCase().includes(q) ||
+            (warehouse.location?.toLowerCase().includes(q) ?? false)
+        );
+    };
+
+    const filteredWarehouses = warehouses
+        .filter((warehouse) => matchesWarehouseQuery(warehouse, warehouseFilterQuery))
+        .slice(0, warehouseFilterQuery.trim() ? 10 : warehouses.length);
+
+
+    const loadWarehouses = async () => {
+        try {
+            const data = await getWarehouses();
+
+            setWarehouses(data);
+            console.log(data);
+
+        } catch (error) {
+            console.error(`Error loading Warehouse: ${error.message}`);
+        }
+    }
+
+    const handleAddWarehouse = async () => {
+        try {
+            if (!warehouseSearch.trim()) return;
+
+            const newWarehouse = await createWarehouse({
+                name: warehouseSearch,
+            });
+
+            await loadWarehouses();
+
+            setFormData({
+                ...formData,
+                warehouseId: newWarehouse.id,
+            });
+
+            setWarehouseSearch(newWarehouse.name);
+            setShowWarehouseDropdown(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleAddCategory = async () => {
+        try {
+            if (!categorySearch.trim()) return;
+
+            const newCategory = await createCategory({
+                name: categorySearch,
+            });
+
+            await loadCategories();
+
+            setFormData({
+                ...formData,
+                categoryId: newCategory.id,
+            });
+
+            setCategorySearch(newCategory.name);
+            setShowCategoryDropdown(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    useEffect(() => {
+        loadWarehouses();
+        loadCategories();
+    }, [])
+
   const [formData, setFormData] = useState({
     productName: "",
     sku: "",
-    category: "Laptops",
-    quantity: 0,
+    categoryId: "",
+    quantity: "",
     location: "",
-    minStock: 0
+      warehouseId: "",
+    minStock: ""
   });
   const handleSubmit = (e) => {
     e.preventDefault();
     const newItem = {
       id: Date.now().toString(),
       ...formData,
+        quantity: Number(formData.quantity),
+        minStock: Number(formData.minStock),
       dateAdded: (/* @__PURE__ */ new Date()).toISOString()
     };
     onAddItem(newItem);
     setFormData({
       productName: "",
       sku: "",
-      category: "Laptops",
-      quantity: 0,
+      categoryId: "",
+      quantity: "",
       location: "",
-      minStock: 0
+      warehouseId: "",
+      minStock: "",
     });
+    setWarehouseSearch("");
+    setWarehouseFilterQuery("");
+    setCategorySearch("");
+    setShowWarehouseDropdown(false);
+    setShowCategoryDropdown(false);
   };
+
+
   return <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
@@ -60,34 +216,107 @@ function InventoryForm({ onAddItem }) {
   />
           </div>
 
-          <div>
-            <label className="block mb-2 text-foreground">Category</label>
-            <select
-    value={formData.category}
-    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-  >
-              <option>Laptops</option>
-              <option>Monitors</option>
-              <option>Keyboards</option>
-              <option>Mice</option>
-              <option>Accessories</option>
-              <option>Storage</option>
-              <option>Networking</option>
-            </select>
-          </div>
+            <div className="relative" ref={dropdownRef}>
+                <label className="block mb-2 text-foreground">Category</label>
 
-          <div>
-            <label className="block mb-2 text-foreground">Warehouse Location</label>
-            <input
-    type="text"
-    required
-    value={formData.location}
-    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-    placeholder="e.g., A-12-03"
-  />
-          </div>
+                <input
+                    type="text"
+                    required
+                    value={categorySearch}
+                    onFocus={() => setShowCategoryDropdown(true)}
+                    onChange={(e) => {
+                        setCategorySearch(e.target.value);
+                        setShowCategoryDropdown(true);
+                        setFormData({ ...formData, categoryId: "" });
+                    }}
+                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Search category..."
+                />
+
+                {showCategoryDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg max-h-48 overflow-y-auto shadow-lg">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData({ ...formData, categoryId: category.id });
+                                        setCategorySearch(category.name);
+                                        setShowCategoryDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-muted"
+                                >
+                                    {category.name}
+                                </button>
+                            ))
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="w-full text-left px-4 py-2 text-primary hover:bg-muted"
+                            >
+                                + Add "{categorySearch}"
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <div className="relative" ref={warehouseDropdownRef}>
+                <label className="block mb-2 text-foreground">Warehouse Location</label>
+
+                <input
+                    type="text"
+                    required
+                    value={warehouseSearch}
+                    onFocus={() => {
+                        setShowWarehouseDropdown(true);
+                        setWarehouseFilterQuery("");
+                    }}
+                    onChange={(e) => {
+                        setWarehouseSearch(e.target.value);
+                        setWarehouseFilterQuery(e.target.value);
+                        setShowWarehouseDropdown(true);
+                        setFormData((prev) => ({ ...prev, warehouseId: "" }));
+                    }}
+                    className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Search warehouse..."
+                />
+
+                {showWarehouseDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg max-h-48 overflow-y-auto shadow-lg">
+                        {filteredWarehouses.length > 0 ? (
+                            filteredWarehouses.map((warehouse) => (
+                                <button
+                                    key={warehouse.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            warehouseId: warehouse.id,
+                                        }));
+                                        setWarehouseSearch(getWarehouseLabel(warehouse));
+                                        setWarehouseFilterQuery("");
+                                        setShowWarehouseDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-muted"
+                                >
+                                    {warehouse.name} {warehouse.location ? `- ${warehouse.location}` : ""}
+                                </button>
+                            ))
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleAddWarehouse}
+                                className="w-full text-left px-4 py-2 text-primary hover:bg-muted"
+                            >
+                                + Add "{warehouseSearch}"
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
 
           <div>
             <label className="block mb-2 text-foreground">Quantity</label>
@@ -96,7 +325,9 @@ function InventoryForm({ onAddItem }) {
     required
     min="0"
     value={formData.quantity}
-    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+    onChange={(e) =>
+        setFormData({ ...formData, quantity: e.target.value })
+    }
     className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
   />
           </div>
@@ -108,7 +339,9 @@ function InventoryForm({ onAddItem }) {
     required
     min="0"
     value={formData.minStock}
-    onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })}
+    onChange={(e) =>
+        setFormData({ ...formData, minStock: e.target.value })
+    }
     className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
   />
           </div>

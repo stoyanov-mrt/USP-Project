@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Warehouse, Mail, Phone, MapPin, Clock } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const CONTACT_DETAILS = {
   email: "vikikavaldjiev@gmail.com",
@@ -16,12 +17,15 @@ function Contact() {
             <Warehouse className="w-5 h-5 text-primary" />
             <span className="font-medium">Warehouse Management</span>
           </Link>
-          <Link
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
     to="/login"
     className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-accent transition-colors"
   >
             Login
-          </Link>
+            </Link>
+          </div>
         </div>
       </header>
 

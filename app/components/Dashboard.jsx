@@ -1,56 +1,113 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Warehouse, FileText, Package, LogOut } from "lucide-react";
 import { InventoryForm } from "./InventoryForm";
 import { InventoryList } from "./InventoryList";
 import { InventoryReport } from "./InventoryReport";
+import {
+    clearStoredAuth,
+    getDashboardSettings,
+    getStocks,
+    createProduct,
+    createStock,
+    updateStock,
+    deleteStock,
+} from "../src/api/api";
+import ThemeToggle from "./ThemeToggle";
+
 function Dashboard() {
+
   const navigate = useNavigate();
-  const [items, setItems] = useState([
-    {
-      id: "1",
-      productName: "Dell UltraSharp U2723DE",
-      sku: "MON-DL-U27-2024",
-      category: "Monitors",
-      quantity: 45,
-      location: "B-08-15",
-      minStock: 20,
-      dateAdded: (/* @__PURE__ */ new Date("2026-04-15")).toISOString()
-    },
-    {
-      id: "2",
-      productName: "Logitech MX Master 3S",
-      sku: "MSE-LG-MX3S",
-      category: "Mice",
-      quantity: 12,
-      location: "C-03-22",
-      minStock: 15,
-      dateAdded: (/* @__PURE__ */ new Date("2026-04-18")).toISOString()
-    },
-    {
-      id: "3",
-      productName: 'MacBook Pro 16" M3',
-      sku: "LPT-AP-MBP16",
-      category: "Laptops",
-      quantity: 8,
-      location: "A-01-05",
-      minStock: 10,
-      dateAdded: (/* @__PURE__ */ new Date("2026-04-20")).toISOString()
-    }
-  ]);
+
   const [activeTab, setActiveTab] = useState("inventory");
-  const handleAddItem = (item) => {
-    setItems([...items, item]);
+
+    const [items, setItems] = useState([]);
+    const [header, setHeader] = useState({
+        title: "Warehouse Inventory System",
+        subtitle: "Electronics Distribution Center",
+    });
+
+    const loadData = async () => {
+        try {
+            const data = await getStocks();
+
+            const mappedItems = data.map((stock) => ({
+                id: stock.id,
+                productName: stock.product.name,
+                sku: stock.product.sku,
+                category: stock.product.category?.name || "Uncategorized",
+                quantity: stock.quantity,
+                location: stock.warehouse.name,
+                minStock: 5,
+                dateAdded: stock.product.createdAt,
+            }));
+
+            setItems(mappedItems);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const settings = await getDashboardSettings();
+                setHeader({
+                    title: settings?.title || "Warehouse Inventory System",
+                    subtitle: settings?.subtitle || "Electronics Distribution Center",
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        })();
+    }, []);
+
+  const handleAddItem = async (item) => {
+
+    const product = await createProduct({
+        name: item.productName,
+        sku: item.sku,
+        description: item.category,
+        categoryId: item.categoryId,
+    });
+
+    const productId = product.id;
+
+    await createStock({
+        productId: productId,
+        warehouseId: item.warehouseId,
+        quantity: item.quantity,
+    });
+
+    await loadData()
   };
-  const handleDeleteItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-  const handleUpdateQuantity = (id, newQuantity) => {
-    setItems(items.map(
-      (item) => item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
-  };
+
+    const handleDeleteItem = async (id) => {
+        try {
+            await deleteStock(id);
+            await loadData();
+        } catch (error) {
+            console.error("Delete failed:", error);
+        }
+    };
+
+    const handleUpdateQuantity = async (id, newQuantity) => {
+        try {
+            if (newQuantity < 0) return;
+
+            await updateStock(id, newQuantity);
+            await loadData();
+        } catch (error) {
+            console.error("Update failed:", error);
+        }
+    };
+
   const handleLogout = () => {
+    clearStoredAuth();
     navigate("/");
   };
   return <div className="min-h-screen bg-background">
@@ -65,17 +122,20 @@ function Dashboard() {
                 <Warehouse className="w-6 h-6" />
               </div>
               <div>
-                <h1>Warehouse Inventory System</h1>
-                <p className="text-muted-foreground mt-1">Electronics Distribution Center</p>
+                <h1>{header.title}</h1>
+                <p className="text-muted-foreground mt-1">{header.subtitle}</p>
               </div>
             </div>
-            <button
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
     onClick={handleLogout}
     className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
   >
               <LogOut className="w-4 h-4" />
               Logout
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </header>
