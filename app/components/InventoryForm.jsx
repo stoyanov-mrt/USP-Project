@@ -7,8 +7,8 @@ function InventoryForm({ onAddItem }) {
     const warehouseDropdownRef = useRef(null);
 
     const [warehouseSearch, setWarehouseSearch] = useState("");
+    const [warehouseFilterQuery, setWarehouseFilterQuery] = useState("");
     const [showWarehouseDropdown, setShowWarehouseDropdown] = useState(false);
-    const [debouncedWarehouseSearch, setDebouncedWarehouseSearch] = useState("");
     const [warehouses, setWarehouses] = useState([]);
 
     const [categories, setCategories] = useState([]);
@@ -27,20 +27,18 @@ function InventoryForm({ onAddItem }) {
     }, [categorySearch]);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedWarehouseSearch(warehouseSearch);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [warehouseSearch]);
-
-    useEffect(() => {
         const handleClickOutside = (event) => {
             if (
                 dropdownRef.current &&
                 !dropdownRef.current.contains(event.target)
             ) {
                 setShowCategoryDropdown(false);
+            }
+            if (
+                warehouseDropdownRef.current &&
+                !warehouseDropdownRef.current.contains(event.target)
+            ) {
+                setShowWarehouseDropdown(false);
             }
         };
 
@@ -66,11 +64,25 @@ function InventoryForm({ onAddItem }) {
         )
         .slice(0, 5);
 
+    const getWarehouseLabel = (warehouse) =>
+        warehouse.location
+            ? `${warehouse.name} - ${warehouse.location}`
+            : warehouse.name;
+
+    const matchesWarehouseQuery = (warehouse, query) => {
+        if (!query.trim()) return true;
+        const q = query.toLowerCase();
+        const label = getWarehouseLabel(warehouse).toLowerCase();
+        return (
+            label.includes(q) ||
+            warehouse.name.toLowerCase().includes(q) ||
+            (warehouse.location?.toLowerCase().includes(q) ?? false)
+        );
+    };
+
     const filteredWarehouses = warehouses
-        .filter((warehouse) =>
-            warehouse.name.toLowerCase().includes(debouncedWarehouseSearch.toLowerCase())
-        )
-        .slice(0, 5);
+        .filter((warehouse) => matchesWarehouseQuery(warehouse, warehouseFilterQuery))
+        .slice(0, warehouseFilterQuery.trim() ? 10 : warehouses.length);
 
 
     const loadWarehouses = async () => {
@@ -159,11 +171,14 @@ function InventoryForm({ onAddItem }) {
       categoryId: "",
       quantity: "",
       location: "",
-        warehouseId: "",
+      warehouseId: "",
       minStock: "",
-    },
-        setWarehouseSearch(""),
-        setCategorySearch(""));
+    });
+    setWarehouseSearch("");
+    setWarehouseFilterQuery("");
+    setCategorySearch("");
+    setShowWarehouseDropdown(false);
+    setShowCategoryDropdown(false);
   };
 
 
@@ -255,11 +270,15 @@ function InventoryForm({ onAddItem }) {
                     type="text"
                     required
                     value={warehouseSearch}
-                    onFocus={() => setShowWarehouseDropdown(true)}
+                    onFocus={() => {
+                        setShowWarehouseDropdown(true);
+                        setWarehouseFilterQuery("");
+                    }}
                     onChange={(e) => {
                         setWarehouseSearch(e.target.value);
+                        setWarehouseFilterQuery(e.target.value);
                         setShowWarehouseDropdown(true);
-                        setFormData({ ...formData, warehouseId: "" });
+                        setFormData((prev) => ({ ...prev, warehouseId: "" }));
                     }}
                     className="w-full px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Search warehouse..."
@@ -273,15 +292,12 @@ function InventoryForm({ onAddItem }) {
                                     key={warehouse.id}
                                     type="button"
                                     onClick={() => {
-                                        setFormData({
-                                            ...formData,
+                                        setFormData((prev) => ({
+                                            ...prev,
                                             warehouseId: warehouse.id,
-                                        });
-
-                                        setWarehouseSearch(
-                                            `${warehouse.name}${warehouse.location ? ` - ${warehouse.location}` : ""}`
-                                        );
-
+                                        }));
+                                        setWarehouseSearch(getWarehouseLabel(warehouse));
+                                        setWarehouseFilterQuery("");
                                         setShowWarehouseDropdown(false);
                                     }}
                                     className="w-full text-left px-4 py-2 hover:bg-muted"
